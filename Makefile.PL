@@ -48,13 +48,6 @@ my %WriteMakefileArgs = (
   }
 );
 
-%WriteMakefileArgs = (
-    %WriteMakefileArgs,
-    XS => { 'lib/Params/Validate/XS.xs' => 'lib/Params/Validate/XS.c' },
-    OBJECT => 'lib/Params/Validate/XS$(OBJ_EXT)',
-    INC => '-I.',
-);
-
 my %FallbackPrereqs = (
   "Carp" => 0,
   "Devel::Peek" => 0,
@@ -90,29 +83,11 @@ delete $WriteMakefileArgs{CONFIGURE_REQUIRES}
 WriteMakefile(%WriteMakefileArgs);
 
 {
-package MY;
-use Config;
-
-sub const_cccmd {
-    my $ret = shift->SUPER::const_cccmd(@_);
-    return q{} unless $ret;
-
-    if ($Config{cc} =~ /^cl\b/i) {
-        warn 'you are using MSVC... we may not have gotten some options quite right.';
-        $ret .= ' /Fo$@';
-    }
-    else {
-        $ret .= ' -o $@';
-    }
-
-    return $ret;
-}
-
-sub constants {
-    my $self = shift;
-    $self->{FULLEXT} = 'Params/Validate/XS';
-    $self->{BASEEXT} = 'XS';
-    $self->{PARENT_NAME} = 'Params/Validate';
-    $self->SUPER::constants(@_);
-}
+  package MY;
+  sub libscan {
+    my ($self, $path) = @_;
+    return
+      unless -d $path || $path =~ /\.(?:pm|pod)$/;
+    $self->SUPER::libscan($path);
+  }
 }
